@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Teleprompter Studio</title>
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --panel-bg: #131b2e;
+            --border-color: #1e293b;
+            --accent-blue: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Professional Control Bar */
+        header.control-panel {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .control-item label {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* Inputs & Buttons Styling */
+        button.btn {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button.btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        button.btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        button.btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        select, input[type="range"] {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            accent-color: var(--accent-blue);
+            cursor: pointer;
+        }
+
+        /* Teleprompter Screen Area */
+        .teleprompter-viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #111827 0%, #0b0f19 100%);
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Reading Focus Indicator Line */
+        .focus-line {
+            position: absolute;
+            top: 42%;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.6), transparent);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .scroll-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding: 25vh 10% 50vh 10%;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .script-content {
+            max-width: 900px;
+            margin: 0 auto;
+            font-size: 44px;
+            line-height: 1.6;
+            color: #ffffff;
+            text-align: center;
+            outline: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .script-content:focus {
+            border: 1px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        /* Mirror Classes */
+        .mirror-h { transform: scaleX(-1); }
+        .mirror-v { transform: scaleY(-1); }
+        .mirror-both { transform: scale(-1, -1); }
+    </style>
+</head>
+<body>
+
+    <!-- Professional Control Panel Header -->
+    <header class="control-panel">
+        <div class="brand">
+            <span>🔴</span> PROMPTER STUDIO
+        </div>
+        
+        <div class="controls-group">
+            <button id="playBtn" class="btn" onclick="togglePlay()">▶ Play</button>
+            <button class="btn btn-secondary" onclick="resetTeleprompter()">⟲ Reset</button>
+            
+            <div class="control-item">
+                <label>Speed:</label>
+                <input type="range" id="speedRange" min="1" max="15" value="4">
+            </div>
+
+            <div class="control-item">
+                <label>Font Size:</label>
+                <input type="range" id="fontSizeRange" min="24" max="80" value="44">
+            </div>
+
+            <div class="control-item">
+                <label>View:</label>
+                <select id="mirrorSelect">
+                    <option value="normal">Standard</option>
+                    <option value="mirror-h">Mirror (H)</option>
+                    <option value="mirror-v">Mirror (V)</option>
+                    <option value="mirror-both">Mirror (Both)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Viewport -->
+    <main class="teleprompter-viewport">
+        <div class="focus-line"></div>
+        <div id="scrollContainer" class="scroll-container">
+            <div id="scriptText" class="script-content" contenteditable="true">
+تاریخ کے صفحات پلٹیں تو کچھ نام وقت کی دھند میں کہیں کھو جاتے ہیں، مگر کچھ نام ایسے ہیں جو خون سے لکھے جائیں تو زمانے کی رفتار بھی انہیں مٹا نہیں سکتی۔
+​دفاعِ مقدس اور ایران-عراق جنگ کی تاریخ کا ایک ایسا ہی تابندہ نام... شہید محمد ابراہیم ہمت۔
+​
+آئیے، چلتے ہیں ایک ایسے سفر پر جہاں شجاعت بھی ہے، سادگی بھی، اور عشقِ الٰہی کی وہ داستان جو رہتی دنیا تک مشعلِ راہ ہے۔
+​
+جب میدانِ جنگ کی بات آتی ہے، تو حاجی ہمت کی حکمتِ عملی عقل، بصیرت کا حسین امتزاج تھا۔
+​وہ صرف دفتروں میں بیٹھ کر نقشے نہیں بناتے تھے۔ کسی بھی معرکے سے پہلے خطرات مول لے کر خود دشمن کی صفوں کے قریب جاتے زمینی حقائق کا خود مشاهدہ کرتے۔ ہمت کا دماغ دشمن کے ہر حربے پر بھاری تھا۔
+
+​جب چاروں طرف گولہ باری کا طوفان برپا ہو، مواصلاتی رابطے ٹوٹ چکے ہوں اور صفیں بکھرنے لگیں... ان کی ایک پرسکون آواز، ٹوٹے ہوئے حوصلوں کو نیا عزم بخش دیتا تھا۔
+​
+میدانِ جنگ کا یہ شیر جب اپنے کیمپ میں ہوتا، تو اس کی سادگی اور عاجزی دیکھ کر عقل دنگ رہ جاتی۔ وہ اتنے بڑے لشکر کے کمانڈر تھے، مگر ان کے چلن میں تکبر نہ تھا۔
+​وہ خود کو کسی کمانڈر کے بجائے ایک ادنیٰ سا(رضاکار) سمجھتے تھے۔
+ان کی اس فولادی طاقت کا راز کہاں چھپا تھا؟ اس کا جواب رات کی تنہائی میں تھا۔
+​دن بھر محاذِ جنگ پر دشمن کی آنکھوں میں آنکھیں ڈالنے والا یہ مردِ آہن، جب رات کا پردہ پڑتا تو اپنے خالق کے حضور سجدہ ریز ہو جاتا۔ نمازِ شب، تلاوتِ قرآن اور گریہ و زاری ان کی روح کی غذا تھی۔ دنیا کی کوئی آسائش، کوئی عہدہ اور کوئی مراعات انہیں اپنی لپیٹ میں نہ لے سکی۔ بوریے پر سونا، سادہ کھانا کھانا اور مشکلات میں چہرے پر مسکراہٹ سجائے رکھنا ان کا شیوہ تھا۔
+​پھر جزیرہ مجنون کا وہ آخری معرکہ آیا، جہاں آگ کا طوفان برپا تھا۔ امامِ وقت کا فرمان تھا کہ ڈٹے رہنا ہے... اور اس ولیِ کامل کے سپاہی نے حکم کی تعمیل میں اپنے خون کا آخری قطرہ تک بہا دیا۔ وہیں پر انہوں نے جامِ شہادت نوش فرمایا۔
+
+​وہ گئے، مگر اپنے کردار کی خوشبو سے تاریخ کے دامن کو ہمیشہ ہمیشہ کے لیے مہکا گئے۔
+​سلام ہو شہید محمد ابراہیم ہمت پر!
+            </div>
+        </div>
+    </main>
+
+
+    <!-- ========================================== -->
+    <!--  SCRIPT KI JAGAH (Yahan apna JS add karein)  -->
+    <!-- ========================================== -->
+    <script>
+        // Aapka JavaScript code yahan likha ya mazeed modify kiya ja sakta hai:
+
+        let isPlaying = false;
+        let scrollInterval;
+        const container = document.getElementById('scrollContainer');
+        const scriptText = document.getElementById('scriptText');
+        const playBtn = document.getElementById('playBtn');
+        const speedRange = document.getElementById('speedRange');
+        const fontSizeRange = document.getElementById('fontSizeRange');
+        const mirrorSelect = document.getElementById('mirrorSelect');
+
+        // Play/Pause Functionality
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playBtn.innerHTML = "⏸ Pause";
+                playBtn.style.backgroundColor = "var(--danger)";
+                startScroll();
+            } else {
+                playBtn.innerHTML = "▶ Play";
+                playBtn.style.backgroundColor = "var(--accent-blue)";
+                stopScroll();
+            }
+        }
+
+        function startScroll() {
+            clearInterval(scrollInterval);
+            let speed = parseInt(speedRange.value);
+            
+            scrollInterval = setInterval(() => {
+                container.scrollTop += speed;
+                // Agar end par pohnch jaye toh rok dein
+                if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+                    togglePlay();
+                }
+            }, 30);
+        }
+
+        function stopScroll() {
+            clearInterval(scrollInterval);
+        }
+
+        function resetTeleprompter() {
+            if (isPlaying) togglePlay();
+            container.scrollTop = 0;
+        }
+
+        // Font Size Control
+        fontSizeRange.addEventListener('input', (e) => {
+            scriptText.style.fontSize = e.target.value + 'px';
+        });
+
+        // Mirror View Control
+        mirrorSelect.addEventListener('change', (e) => {
+            scriptText.className = "script-content " + e.target.value;
+        });
+
+        // Keyboard Shortcut: Spacebar for Play/Pause
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && document.activeElement !== scriptText) {
+                e.preventDefault();
+                togglePlay();
+            }
+        });
+
+    </script>
+
+</body>
+</html>
